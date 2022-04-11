@@ -5,7 +5,8 @@ const messageSquema = new Schema({
     content: {
         username: String,
         sender: String,
-        content: String
+        content: String,
+        id:String
     },
     time: {type: Date, default: Date.now}
 },{
