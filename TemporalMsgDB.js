@@ -7,7 +7,7 @@ async function getMessages(user) {
     user.toLowerCase()
     var doc
     const client = mongoose.connect(uri)
-        .then(() => console.log("Connected to MongoDB"))
+        .then(() => console.log("Connected. Getting msg for user ",user))
         .catch(e => console.log(e));
 
     return await Message.find({ type: "message", "content.username": user }).then(

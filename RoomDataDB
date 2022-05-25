@@ -5,10 +5,9 @@ const uri =
 
 
 async function getUsersFromID(roomID) {
-    roomID.toLowerCase()
     var doc
     const client = mongoose.connect(uri)
-        .then(() => console.log("Connected to MongoDB"))
+        .then(() => console.log("Connected. Getting user list "))
         .catch(e => console.log(e));
 
     return await Room.find({ id: roomID},{_id:0,users:1}).then(
@@ -17,5 +16,11 @@ async function getUsersFromID(roomID) {
 
         })
 }
+async function saveRoom(content) {
+    const client = mongoose.connect(uri)
+        .then(() => console.log("Connected. Saving room"))
+        .catch(e => console.log(e));
+    await Room.insertMany(content).then( (err) => { if (err) console.log(err); })
+}
 
-module.exports={getUsersFromID};
+module.exports={getUsersFromID,saveRoom};

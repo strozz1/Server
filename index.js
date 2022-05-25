@@ -6,7 +6,8 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 const { saveMessage, getMessages } = require('./TemporalMsgDB')
-const { getUsersFromID } = require('./RoomDataDB')
+const { guardarUsuario, getUserCredentials } = require('./UserDatabaseManager')
+const { getUsersFromID,saveRoom } = require('./RoomDataDB')
 
 const usersOnline = new Map()
 
@@ -17,23 +18,53 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('User connected, waiting for login');
-  socket.on('login', (user, password, callback) => {
-    console.log('User logged in=> ', user, ":", password)
+  console.log('User connected, waiting for login or register');
+
+  socket.on('register', async (user,mail,password,image, callback) => {
+    console.log('User register in=> ', user, ":")
+  
+    var code=await saveUser(user,password,mail,image);
+    if(code){
+      callback({
+        code: "200"
+      })
+    }else{
+      callback({
+        code: "400"
+      })
+    }
+
+  })
+
+  socket.on('login', async (user, password, callback) => {
+    var login=await checkLogin(user,password)
+    console.log('Response '+login)
+    if(login == 0) {
+      callback({
+        code: "400"
+      })
+      console.log('Bad credentials.')
+      return;
+    }
+    console.log('User logged in=> ', user)
     usersOnline.set(user, socket)
     callback({
-      code: "200"
+      code: "200",
+      user: login
     })
     getPendingMessages(user)
-    socket.on('message', (msg) => {
-      console.log("new meesage in")
+
+    socket.on('message', async (msg) => {
+      console.log("New message incoming from ",user)
       var obj = JSON.parse(msg)
+      
       if (obj.type == "message") {
         var username = obj.content.username
         sendMessage(username, obj)
       }
-      if (obj.type == "group-message") {
-        var users = getGroupUsers(obj.content.id)
+      if (obj.type == "room-message") {
+        var users = await getGroupUsers(obj.content.id)
+        console.log(users)
         for (let index = 0; index < users.length; index++) {
           const user = users[index];
           sendMessage(user,obj)
@@ -41,10 +72,21 @@ io.on('connection', (socket) => {
       }
 
     })
+    socket.on('room-creation',(msg)=>{
+      console.log("New room creation incoming from ",user)
+      var obj = JSON.parse(msg)
+      saveRoom(obj)
+      sendGroupCreation(obj)
+    })
+    socket.on('offline',(user)=>{
+      console.log(user+' has disconnected')
+      usersOnline.delete(user)
+    })
   })
 
-  socket.on('disconnect', () => {
-    console.log('a user disconnected');
+  socket.on('disconnect', (er) => {
+    console.log('User disconnected')
+    
   })
 });
 
@@ -55,10 +97,15 @@ server.listen(3000, () => {
 async function getPendingMessages(user) {
   var docs = await getMessages(user)
   var socket = usersOnline.get(user)
+    // Usage!
+    sleep(2000).then(() => {
+      // Do something after the sleep!
+  
   for (var i = 0; i < docs.length; i++) {
     console.log('message send to ' + user);
     socket.emit("message", docs[i])
   }
+});
 }
 
 async function getGroupUsers(id) {
@@ -70,10 +117,38 @@ async function getGroupUsers(id) {
 
 function sendMessage(username, message) {
   var userSocket = usersOnline.get(username)
-  if (userSocket != null) {
+  if(userSocket!=null){
+    console.log("Message sended to ",username,". Message: ",message)
     userSocket.emit("message", message)
   } else {
     saveMessage(message)
 
   }
 }
+
+function sendGroupCreation(room){
+  id= room.content.id
+  console.log("Sending group creation for roomId> ",id)
+  var list= room.content.users
+  for (let index = 0; index < list.length; index++) {
+    const user = list[index];
+    sendMessage(user,room)
+  }
+  
+}
+
+async function saveUser(user,password,mail,image){
+return await guardarUsuario(user,password,mail,image)
+
+}
+async function checkLogin(user,password){
+  var login=  await getUserCredentials(user,password)
+  console.log('Response from db ',login)
+  if(login.length>0) return login; 
+  return 0;
+  }
+  
+  function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+  }
+  
