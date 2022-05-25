@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const roomSquema = new Schema({
-    id: String,
-    users:[],
-    time: {type: Date, default: Date.now}
-},{
-    versionKey:false
+    type: String,
+    content: {
+        id: String,
+        name: String,
+        users: [],
+        time: { type: Date, default: Date.now }
+    }
+}, {
+    versionKey: false
 })
 
 
-const Room = mongoose.model('room-datas',roomSquema)
+const Room = mongoose.model('room-datas', roomSquema)
 
-module.exports= Room;
+module.exports = Room;
