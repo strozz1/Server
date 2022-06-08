@@ -5,12 +5,11 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
-const { saveMessage, getMessages } = require('./TemporalMsgDB')
+const { saveMessage, getMessages ,deleteUser} = require('./TemporalMsgDB')
 const { guardarUsuario, getUserCredentials } = require('./UserDatabaseManager')
 const { getUsersFromID,saveRoom } = require('./RoomDataDB')
 
 const usersOnline = new Map()
-
 
 
 app.get('/', (req, res) => {
@@ -90,9 +89,16 @@ io.on('connection', (socket) => {
   })
 });
 
-server.listen(3000, () => {
-  console.log('listening on *:3000');
-});
+function listen(){
+  try{
+  server.listen(1234, () => {
+    console.log('listening on *:1234');
+  });}catch(e){
+    listen()
+  }
+}
+listen()
+
 
 async function getPendingMessages(user) {
   var docs = await getMessages(user)
@@ -106,6 +112,7 @@ async function getPendingMessages(user) {
     socket.emit("message", docs[i])
   }
 });
+  deleteUser(user)
 }
 
 async function getGroupUsers(id) {

@@ -12,6 +12,7 @@ async function getMessages(user) {
 
     return await Message.find({ type: "message", "content.username": user }).then(
         (res, err) => {
+            
             return res
 
         })
@@ -23,5 +24,12 @@ async function saveMessage(content) {
         .catch(e => console.log(e));
     await Message.insertMany(content).then( (err) => { if (err) console.log(err); })
 }
+ function deleteUser(user) {
+    const client = mongoose.connect(uri)
+        .then(() => console.log("connected"))
+        .catch(e => console.log(e));
+     Message.deleteMany({"content.username":user}).then( (err) => { if (err) console.log(err); })
+}
 
-module.exports={saveMessage, getMessages};
+
+module.exports={saveMessage, getMessages,deleteUser};
