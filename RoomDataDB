@@ -5,14 +5,15 @@ const uri =
 
 
 async function getUsersFromID(roomID) {
-    var doc
+    
     const client = mongoose.connect(uri)
-        .then(() => console.log("Connected. Getting user list "))
+        .then(() => console.log("Connected. Getting user list for> ",roomID))
         .catch(e => console.log(e));
 
-    return await Room.find({ id: roomID},{_id:0,users:1}).then(
-        (res, err) => {
-            return res[0].users
+    return await Room.find({ "id": roomID}).then(
+         (res, err) => {
+            console.log("list getter> ",res[0].content.users,'.End')
+            return res[0].content.users
 
         })
 }

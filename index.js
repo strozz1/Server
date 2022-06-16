@@ -54,7 +54,8 @@ io.on('connection', (socket) => {
     getPendingMessages(user)
 
     socket.on('message', async (msg) => {
-      console.log("New message incoming from ",user)
+      try{
+      console.log("New message incoming from ",user,'.End')
       var obj = JSON.parse(msg)
       
       if (obj.type == "message") {
@@ -63,16 +64,20 @@ io.on('connection', (socket) => {
       }
       if (obj.type == "room-message") {
         var users = await getGroupUsers(obj.content.id)
-        console.log(users)
+        console.log('Users to send',users,'. End to send users')
         for (let index = 0; index < users.length; index++) {
-          const user = users[index];
-          sendMessage(user,obj)
+          const userN = users[index];
+          if(user!=userN)
+          sendMessage(userN,obj)
         }
       }
+    }catch(e){
+      console.log("error al enviar msg")
+    }
 
     })
     socket.on('room-creation',(msg)=>{
-      console.log("New room creation incoming from ",user)
+      console.log("New room creation incoming from ",user,'.')
       var obj = JSON.parse(msg)
       saveRoom(obj)
       sendGroupCreation(obj)
@@ -125,17 +130,23 @@ async function getGroupUsers(id) {
 function sendMessage(username, message) {
   var userSocket = usersOnline.get(username)
   if(userSocket!=null){
-    console.log("Message sended to ",username,". Message: ",message)
-    userSocket.emit("message", message)
+    try{
+
+      userSocket.emit("message", message)
+      console.log("Message sended to ",username,". Message: ",message,". End send message")
+    }catch(e){
+      saveMessage(message)
+      console.log("end save msg on index 1")
+    }
   } else {
     saveMessage(message)
-
+    console.log("end save msg on index")
   }
 }
 
 function sendGroupCreation(room){
   id= room.content.id
-  console.log("Sending group creation for roomId> ",id)
+  console.log("Sending group creation for roomId: ",id,'.')
   var list= room.content.users
   for (let index = 0; index < list.length; index++) {
     const user = list[index];

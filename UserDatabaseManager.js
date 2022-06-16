@@ -19,14 +19,14 @@ console.log('Search for '+user+' and '+pass)
 
 async function guardarUsuario(user,pass,mail,image) {
     const client = mongoose.connect(uri)
-        .then(() => console.log("connected"))
+        .then(() => console.log("connected saving user"))
         .catch(e => console.log(e));
         var content =`{"username": "${user}",
         "password": "${pass}",
         "mail": "${mail}",
         "image": "${image}"}`;
          var users= await checkUserExist(user,mail)
-         console.log('users'+users)
+         console.log('users>'+users,'. end users')
          if(users.length<1){
             var obj = JSON.parse(content)
              await Usuario.insertMany(obj).then( (err) => { if (err) console.log(err); })
@@ -36,7 +36,7 @@ async function guardarUsuario(user,pass,mail,image) {
 }
 async function checkUserExist(user,mail){
     const client = mongoose.connect(uri)
-    .then(() => console.log("connected"))
+    .then(() => console.log("connected checking user"))
     .catch(e => console.log(e));
    return  await Usuario.find({ "username": user }).then(
         (res, err) => {
